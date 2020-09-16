@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <div v-for="article in articles" :key="article.id">
+    <div v-for="article in sortedArticles" :key="article.id">
       <feed-article :article="article"/>
     </div>
   </div>
@@ -17,20 +17,25 @@ export default {
   },
   data() {
     return {
-      rssFeeds: ['https://flipboard.com/@raimoseero/feed-nii8kd0sz.rss'],
+      rssFeeds: ['https://flipboard.com/@raimoseero/feed-nii8kd0sz.rss', 'https://www.nasa.gov/rss/dyn/breaking_news.rss'],
       articles: []
     }
   },
   methods: {
     fetchData(rssFeeds) {
+      rssFeeds.forEach(feed => {
+        this.fetchFeedArticles(feed)
+      });
+    },
+    fetchFeedArticles(feed) {
       const request = new XMLHttpRequest();
       const self = this;
 
-      request.open("GET", rssFeeds[0], true);
+      request.open("GET", feed, true);
 
       request.onreadystatechange = function () {
         if (request.readyState == 4 && request.status == 200) {
-          self.populateObjectsArray(request.responseXML.documentElement, rssFeeds[0]);
+          self.populateObjectsArray(request.responseXML.documentElement, feed);
         }
       };
       request.send(null);
@@ -47,10 +52,9 @@ export default {
         article.author = item.getElementsByTagName('author').item(0) ? item.getElementsByTagName('author')[0].textContent : '';
         article.description = item.getElementsByTagName('description').item(0) ? item.getElementsByTagName('description')[0].textContent : '';
         article.sourceUrl = item.getElementsByTagName('link').item(0) ? item.getElementsByTagName('link')[0].textContent : '';
-        article.feed = feed;
+        article.feed = this.formatFeed(feed);
         article.imageUrl = this.findImageUrl(item.innerHTML) ? this.findImageUrl(item.innerHTML) : '';
         article.id = uuidv4();
-        console.log(article.description)
         this.articles.push(article);
       }
     },
@@ -58,9 +62,33 @@ export default {
       let innerHtmlArray = innerHtml.split('"');
       let imageUrl = innerHtmlArray.find(fragment => fragment.includes('.jpg') || fragment.includes('.png') || fragment.includes('.gif'))
       return imageUrl;
+    },
+    formatFeed(feed) {
+      if (feed.includes('https://')) {
+        return feed.split('https://').pop();
+      } else {
+        return feed.split('http://').pop();
+      }
+    },
+    compareDates(a,b) {
+      let dateA = new Date(a.pubDate);
+      let dateB = new Date(b.pubDate);
+
+      let comparison = 0;
+
+      if (dateA > dateB) {
+        comparison = -1;
+      } else if (dateA < dateB) {
+        comparison = 1;
+      }
+      return comparison;
     }
   },
-
+  computed: {
+    sortedArticles() {
+      return this.articles.slice().sort(this.compareDates);
+    }
+  },
   mounted() {
     this.fetchData(this.rssFeeds);
   }
