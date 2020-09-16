@@ -1,28 +1,41 @@
 <template>
   <div id="app">
+    <content-modal 
+      v-if="modalOpen"
+      :content="openArticleContent"
+      @close="closeContent()"
+    />
     <div v-for="article in sortedArticles" :key="article.id">
-      <feed-article :article="article"/>
+      <feed-article 
+        :article="article"
+        @openContentModal="fetchArticleContent(article.sourceUrl)" 
+      />
     </div>
   </div>
 </template>
 
 <script>
 import FeedArticle from './components/FeedArticle';
+import ContentModal from './components/ContentModal';
+import Mercury from "@postlight/mercury-parser";
+
 import { v4 as uuidv4 } from 'uuid';
 
 export default {
   name: 'App',
   components: {
-    FeedArticle
+    FeedArticle, ContentModal
   },
   data() {
     return {
-      rssFeeds: ['https://flipboard.com/@raimoseero/feed-nii8kd0sz.rss', 'https://www.nasa.gov/rss/dyn/breaking_news.rss'],
-      articles: []
+      rssFeeds: ['https://flipboard.com/@raimoseero/feed-nii8kd0sz.rss', 'https://www.nasa.gov/rss/dyn/breaking_news.rss', 'http://rss.cnn.com/rss/edition.rss', 'https://www.feedforall.com/sample-feed.xml'],
+      articles: [],
+      modalOpen: false,
+      openArticleContent: ''
     }
   },
   methods: {
-    fetchData(rssFeeds) {
+    fetchAllArticles(rssFeeds) {
       rssFeeds.forEach(feed => {
         this.fetchFeedArticles(feed)
       });
@@ -39,6 +52,13 @@ export default {
         }
       };
       request.send(null);
+    },
+    fetchArticleContent(url) {
+      Mercury.parse(url).then(result => {
+        let content = result.content;
+        console.log(result)
+        this.openContentModal(content);
+      });
     },
     populateObjectsArray(xmlContent, feed) {
       const itemList = xmlContent.getElementsByTagName('item');
@@ -82,6 +102,13 @@ export default {
         comparison = 1;
       }
       return comparison;
+    },
+    openContentModal(content) {
+      this.openArticleContent = content;
+      this.modalOpen = true;
+    },
+    closeContent() {
+      this.modalOpen = false;
     }
   },
   computed: {
@@ -90,7 +117,7 @@ export default {
     }
   },
   mounted() {
-    this.fetchData(this.rssFeeds);
+    this.fetchAllArticles(this.rssFeeds);
   }
 }
 </script>
