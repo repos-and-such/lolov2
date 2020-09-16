@@ -1,12 +1,14 @@
 <template>
   <div id="app">
-    <div v-for="article in articles" :key="article.id">{{ article }}</div>
-    <feed-article />
+    <div v-for="article in articles" :key="article.id">
+      <feed-article :article="article"/>
+    </div>
   </div>
 </template>
 
 <script>
-import FeedArticle from './components/FeedArticle'
+import FeedArticle from './components/FeedArticle';
+import { v4 as uuidv4 } from 'uuid';
 
 export default {
   name: 'App',
@@ -16,7 +18,7 @@ export default {
   data() {
     return {
       rssFeeds: ['https://flipboard.com/@raimoseero/feed-nii8kd0sz.rss'],
-      articles: [{title: "example", id: 1}, {title: "bexample", id: 2}]
+      articles: []
     }
   },
   methods: {
@@ -36,7 +38,7 @@ export default {
     populateObjectsArray(xmlContent, feed) {
       const itemList = xmlContent.getElementsByTagName('item');
 
-      itemList.forEach(item => {
+      for (const item of itemList) {
         let article = {};
 
         article.title = item.getElementsByTagName('title').item(0) ? item.getElementsByTagName('title').item(0).textContent : '';
@@ -46,9 +48,16 @@ export default {
         article.description = item.getElementsByTagName('description').item(0) ? item.getElementsByTagName('description')[0].textContent : '';
         article.sourceUrl = item.getElementsByTagName('link').item(0) ? item.getElementsByTagName('link')[0].textContent : '';
         article.feed = feed;
-
+        article.imageUrl = this.findImageUrl(item.innerHTML) ? this.findImageUrl(item.innerHTML) : '';
+        article.id = uuidv4();
+        console.log(article.description)
         this.articles.push(article);
-      }); 
+      }
+    },
+    findImageUrl(innerHtml) {
+      let innerHtmlArray = innerHtml.split('"');
+      let imageUrl = innerHtmlArray.find(fragment => fragment.includes('.jpg') || fragment.includes('.png') || fragment.includes('.gif'))
+      return imageUrl;
     }
   },
 
@@ -59,4 +68,10 @@ export default {
 </script>
 
 <style>
+#app {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  background-color: rgb(233, 233, 233);
+}
 </style>
