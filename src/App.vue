@@ -43,8 +43,8 @@ export default {
     fetchFeedArticles(feed) {
       const request = new XMLHttpRequest();
       const self = this;
-
-      request.open("GET", feed, true);
+      const proxy = 'https://cors-anywhere.herokuapp.com/'
+      request.open("GET", proxy + feed, true);
 
       request.onreadystatechange = function () {
         if (request.readyState == 4 && request.status == 200) {
@@ -54,9 +54,9 @@ export default {
       request.send(null);
     },
     fetchArticleContent(url) {
-      Mercury.parse(url).then(result => {
+      const proxy = 'https://cors-anywhere.herokuapp.com/';
+      Mercury.parse(proxy + url).then(result => {
         let content = result.content;
-        console.log(result)
         this.openContentModal(content);
       });
     },

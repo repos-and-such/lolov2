@@ -106,10 +106,16 @@ small {
 @media screen and (max-width: 800px){
 .article {
   width: 100vw;
+  box-shadow: none;
+  margin: 0px;
 }
 
 .image-content {
   width: 100vw;
+}
+
+.corner-mock {
+  display: none;
 }
 }
 </style>
