@@ -1,15 +1,16 @@
 <template>
   <div id="app">
     <header class="error-panel" v-if="errorOpen">
-      Oh snap, something went wrong...
+      Oh snap, an error :(
     </header>
     <header v-else>
       <b>Lolo v2</b>
       <i class="material-icons" @click="toggleMenu()">menu</i>
     </header>
     <main-menu 
-      v-if="menuOpen"
+      v-if="menuOpen || true"
       @addFeed="addFeed"
+      @deleteFeed="deleteFeed"
       @toggleCategoryFilter="toggleCategoryFilter"
       :feeds="rssFeeds"
       :categories="availableCategories"
@@ -21,6 +22,7 @@
       @close="closeContent()"
     />
     <div class="articles-container">
+      <h3 v-if="articles.length === 0">Add some feeds to stay informed of the latest trends!</h3>
       <ul v-for="article in filteredArticles" :key="article.id">
         <feed-article 
           :article="article"
@@ -48,10 +50,11 @@ export default {
   data() {
     return {
       rssFeeds: [
-        'https://flipboard.com/@raimoseero/feed-nii8kd0sz.rss', 
-        // 'https://www.nasa.gov/rss/dyn/breaking_news.rss', 
+        // 'https://flipboard.com/@raimoseero/feed-nii8kd0sz.rss', 
+        // 'https://www.nasa.gov/rss/dyn/breaking_news.rss',
         // 'http://feeds.bbci.co.uk/news/world/rss.xml',
-        'https://www.feedforall.com/sample-feed.xml'],
+        // 'https://www.feedforall.com/sample-feed.xml'
+        ],
       articles: [],
       modalOpen: false,
       openArticleContent: '',
@@ -72,25 +75,35 @@ export default {
     fetchFeedArticles(feed) {
       const request = new XMLHttpRequest();
       const self = this;
-      request.open("GET", this.proxy + feed, true);
+      
+      request.open("GET",
+      this.proxy + 
+      feed, true);
 
       request.onreadystatechange = function () {
         if (request.readyState == 4 && request.status == 200) {
           if (request.responseXML) {
             if (!self.rssFeeds.includes(feed)) {
               self.rssFeeds.push(feed);
+              localStorage.setItem('storedFeeds', self.rssFeeds);
             }
             self.populateObjectsArray(request.responseXML.documentElement, feed);
           } else {
             self.displayError();
+            console.error(`Feed ${feed} didn't respond`);
           }
-        }
+        } else if (request.readyState == 4 && request.status !== 200) {
+            self.displayError();
+            console.error(`Feed ${feed} responded with error`);
+          }
       };
       request.send(null);
     },
     fetchArticleContent(url) {
       this.loadingUrl = url;
-      Mercury.parse(this.proxy + url).then(result => {
+      Mercury.parse(
+        this.proxy + 
+        url).then(result => {
         let content = result.content;
         this.openContentModal(content);
         this.loadingUrl = null;
@@ -108,7 +121,7 @@ export default {
         article.author = item.getElementsByTagName('author').item(0) ? item.getElementsByTagName('author')[0].textContent : '';
         article.description = item.getElementsByTagName('description').item(0) ? item.getElementsByTagName('description')[0].textContent : '';
         article.sourceUrl = item.getElementsByTagName('link').item(0) ? item.getElementsByTagName('link')[0].textContent : '';
-        article.feed = this.formatFeed(feed);
+        article.feed = feed;
         article.imageUrl = this.findImageUrl(item.innerHTML) ? this.findImageUrl(item.innerHTML) : '';
         article.id = uuidv4();
         this.articles.push(article);
@@ -122,13 +135,6 @@ export default {
       let innerHtmlArray = innerHtml.split('"');
       let imageUrl = innerHtmlArray.find(fragment => fragment.includes('.jpg') || fragment.includes('.png') || fragment.includes('.gif'))
       return imageUrl;
-    },
-    formatFeed(feed) {
-      if (feed.includes('https://')) {
-        return feed.split('https://').pop();
-      } else {
-        return feed.split('http://').pop();
-      }
     },
     compareDates(a,b) {
       let dateA = new Date(a.pubDate);
@@ -155,6 +161,19 @@ export default {
     },
     addFeed(feedUrl) {
       this.fetchFeedArticles(feedUrl);
+
+    },
+    deleteFeed(feed) {
+      let index = this.rssFeeds.indexOf(feed);
+
+      if (index > -1) {
+        this.rssFeeds.splice(index, 1);
+        localStorage.setItem('storedFeeds', this.rssFeeds);
+        this.removeFeedsArticles(feed);
+      } else {
+        this.displayError();
+        console.error(`Feed ${feed} doesn't exist`);
+      }
     },
     displayError() {
       this.errorOpen = true;
@@ -165,10 +184,33 @@ export default {
     toggleCategoryFilter(category) {
       if (this.categoryFilters.includes(category)) {
         let index = this.categoryFilters.indexOf(category);
-        this.categoryFilters.splice(index, 1);
+        if (index > -1) {
+          this.categoryFilters.splice(index, 1);
+        } else {
+          this.displayError();
+          console.error(`Category ${category} doesn't exist`);
+        }
       } else {
         this.categoryFilters.push(category);
       }
+    },
+    removeFeedsArticles(feed) {
+    
+      for (let i = this.articles.length - 1; i > -1; i--) {
+        let article = this.articles[i];
+        if (article.feed === feed) {
+          this.articles.splice(i, 1);
+        }
+      }
+    },
+    initializeLocalStorage() {
+      if (!localStorage.getItem('storedFeeds')) {
+        localStorage.setItem('storedFeeds', `https://flipboard.com/@raimoseero/feed-nii8kd0sz.rss`)
+      } 
+      // else if (!localStorage.getItem('storedFeeds').includes('https://flipboard.com/@raimoseero/feed-nii8kd0sz.rss')) {
+      //   localStorage.setItem('storedFeeds', `${localStorage.getItem('storedFeeds')},https://flipboard.com/@raimoseero/feed-nii8kd0sz.rss`)
+      // }
+      this.rssFeeds = localStorage.getItem('storedFeeds').split(',');
     }
   },
   computed: {
@@ -184,6 +226,7 @@ export default {
     }
   },
   mounted() {
+    this.initializeLocalStorage();
     this.fetchAllArticles(this.rssFeeds);
   }
 }
@@ -209,6 +252,11 @@ ul {
   margin: 0px;
 }
 
+h3 {
+  color: gray;
+  margin: 10px;
+}
+
 .articles-container {
   margin-top: 60px;
   display: flex;
@@ -230,6 +278,14 @@ ul {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
+  height: 100%;
   background-color: rgb(233, 233, 233);
+}
+
+
+@media screen and (max-width: 700px){
+i {
+  margin-left: 40vw;
+}
 }
 </style>

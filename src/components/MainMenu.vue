@@ -2,22 +2,28 @@
   <div class="container">
     <p>
       <b>Add new feed:</b> 
-      <input type="text" v-model="feedInput" @keydown.enter="addFeed()">
+      <input type="text" v-model="addFeedInput" @keydown.enter="addFeed()">
       <i class="material-icons" @click="addFeed()">check</i>
     </p>
-    <ul id="my-feeds"><b>My feeds:</b>
-      <li v-for="feed in feeds" :key="feed">
-        {{ feed }}
-        <i class="material-icons" id="edit-icon">create</i>
-        <i class="material-icons" id="delete-icon">delete_forever</i>
-      </li>
-    </ul>
-    <ul>
+    <div id="my-feeds"><b>My feeds:</b>
+      <ul v-for="feed in feeds" :key="feed">
+        <p v-if="editedFeed === feed">
+          <input v-model="editFeedInput" @keydown.enter="confirmEdit(feed)"/>
+          <i class="material-icons" @click="confirmEdit(feed)">check</i>
+        </p>
+        <li v-else>
+          {{ feed }}
+          <i class="material-icons" id="edit-icon" @click="openEditField(feed)">create</i>
+          <i class="material-icons" id="delete-icon" @click="deleteFeed(feed)">delete_forever</i>
+        </li>
+      </ul>
+    </div>
+    <p>
       <b>Categories:</b>
-      <li v-for="category in categories" :key="category" @click="toggleCategoryFilter(category)">
-        <span :class="[categoryFilters.includes(category) ? 'feed-category-selected' : 'feed-category' ]">{{ category }}</span>
-      </li>
-    </ul>
+      <ul v-for="category in categories" :key="category" @click="toggleCategoryFilter(category)">
+        <li :class="[categoryFilters.includes(category) ? 'feed-category-selected' : 'feed-category' ]">{{ category }}</li>
+      </ul>
+    </p>
   </div>
 </template>
 
@@ -31,13 +37,35 @@ export default {
   },
   data() {
     return {
-      feedInput: ''
+      addFeedInput: '',
+      editFeedInput: '',
+      editedFeed: ''
     }
   },
   methods: {
     addFeed() {
-      this.$emit('addFeed', this.feedInput);
-      this.feedInput = '';
+      let input = this.addFeedInput || this.editFeedInput;
+      if (!this.validateInput(input)) return;
+      input.trim();
+      this.$emit('addFeed', input);
+      this.addFeedInput = '';
+      this.editFeedInput = '';
+    },
+    deleteFeed(feed) {
+      this.$emit('deleteFeed', feed);
+    },
+    validateInput(input) {
+      return input.includes('http') && (input.includes('.rss') || input.includes('.xml')) && input.length > 10 && input.length < 1000;
+    },
+    openEditField(feed) {
+      this.addFeedInput = '';
+      this.editFeedInput = feed;
+      this.editedFeed = feed;
+    },
+    confirmEdit(feed) {
+      this.deleteFeed(feed);
+      this.addFeed(this.editFeedInput);
+      this.editedFeed = '';
     },
     toggleCategoryFilter(category) {
       this.$emit('toggleCategoryFilter', category)
@@ -129,5 +157,4 @@ li {
   font-weight: bold;
   color: rgb(21, 153, 113);
 }
-
 </style>
