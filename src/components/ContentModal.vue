@@ -42,5 +42,6 @@ export default {
   z-index: 99;
   padding: 16px;
   overflow: auto;
+  box-shadow: 3px 3px 5px rgb(71, 71, 71);
 }
 </style>

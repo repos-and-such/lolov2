@@ -1,13 +1,11 @@
 <template>
-  <div class="article">
-    <small>{{ article.feed }}</small>
+  <div class="container">
+    <small>{{ loadingUrl === article.sourceUrl ? 'loading...' : article.feed }}</small>
     <div class="corner-mock"></div> 
     <span class="image-wrapper" v-if="article.imageUrl" @click="openContentModal()">
       <img class="image-content" :src="article.imageUrl" alt="Picture not available">
     </span>
     <span v-else-if="article.category" style="height: 34px;"></span>
-    
-    <div>{{article.sourceUrl}}</div>
     <span class="text-pane">
       <h1 id="article-title" @click="openContentModal()">{{ article.title }}</h1>
       <span class="author-and-date">
@@ -24,7 +22,8 @@
 export default {
   name: 'FeedArticle',
   props: {
-    article: Object
+    article: Object,
+    loadingUrl: String
   },
   methods: {
     openContentModal() {
@@ -44,9 +43,13 @@ h2 {
 }
 
 small {
-  background-color: rgb(0, 98, 128);
+  background-color: rgb(92, 0, 128);
   color: rgba(255, 255, 255, 0.575);
   padding: 1px 16px;
+  font-size: 16px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 #article-title {
@@ -57,7 +60,7 @@ small {
   cursor: pointer;
 }
 
-.article {
+.container {
   display: flex;
   flex-direction: column;
   width: 500px;
@@ -96,18 +99,28 @@ small {
 
 .corner-mock {
   position:absolute;
-  margin: -28px;
+  margin: -27px;
   width: 40px;
   height: 40px;
   background-color: rgb(233, 233, 233);
   transform: rotate(30deg);
 }
 
-@media screen and (max-width: 800px){
-.article {
+@media screen and (max-width: 1100px){
+.container {
+  width: 400px;
+}
+
+.image-content {
+  width: 400px;
+}
+}
+
+@media screen and (max-width: 700px){
+.container {
   width: 100vw;
   box-shadow: none;
-  margin: 0px;
+  margin: 16px 0px;
 }
 
 .image-content {
@@ -117,5 +130,6 @@ small {
 .corner-mock {
   display: none;
 }
+
 }
 </style>
