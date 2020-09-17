@@ -167,7 +167,7 @@ small {
 
 @media screen and (max-width: 700px){
 .container {
-  width: 100vw;
+  width: 98vw;
   box-shadow: none;
   margin: 16px 0px;
 }

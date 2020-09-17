@@ -235,6 +235,8 @@ ul {
 
 .container {
   font-size: 16px;
+  margin: 0px;
+  padding: 0px;
 }
 
 .feed-category, .feed-category-selected {

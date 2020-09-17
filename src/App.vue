@@ -250,11 +250,11 @@ header {
   align-items: center;
   width: 100vw;
   font-size: 28px;
-  padding: 10px;
   background-image: linear-gradient(176deg, rgb(72, 0, 90), rgb(0, 87, 90));
   color: white;
   box-shadow: 0px 0px 3px gray;
   z-index: 54;
+  padding: 6px 0px;
 }
 
 ul {
