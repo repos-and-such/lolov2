@@ -9,7 +9,7 @@
         'blue': article.feedColorCode === 4,
         }"
     >
-        {{ loadingUrl === article.sourceUrl ? 'loading...' : article.feed }}
+        {{ loadingUrl === article.sourceUrl ? 'loading...' : article.feed | trimProtocol }}
       </small>
     <div class="corner-mock"></div> 
     <span class="image-wrapper" v-if="article.imageUrl" @click="openContentModal()">
@@ -20,7 +20,7 @@
       <h1 id="article-title" @click="openContentModal()">{{ article.title }}</h1>
       <span class="author-and-date">
         <h2>{{ article.author }}</h2>
-        <h2>{{ article.pubDate }}</h2>
+        <h2>{{ localTime }}</h2>
       </span>
       <p id="article-description" @click="openContentModal()">{{ article.description}}</p>
     </span>
@@ -38,6 +38,8 @@
 </template>
 
 <script>
+import moment from 'moment';
+
 export default {
   name: 'FeedArticle',
   props: {
@@ -50,9 +52,18 @@ export default {
       this.$emit('openContentModal');
     }
   },
+  filters: {
+    trimProtocol(value) {
+      if (!value) return '';
+      return value.split('://').pop();
+    }
+  },
   computed: {
     categoryColorCode() {
       return this.categories.indexOf(this.article.category)%5;
+    },
+    localTime() {
+      return this.article.pubDate ? moment(this.article.pubDate).local().format('HH:mm LL') : '';
     }
   }
 }
@@ -138,7 +149,7 @@ small {
   background-image: linear-gradient(176deg, rgb(42, 134, 55), rgb(159, 167, 87));
 }
 .blue {
-  background-image: linear-gradient(176deg, rgb(46, 121, 165), rgb(29, 155, 123));
+  background-image: linear-gradient(176deg, rgb(36, 126, 211), rgb(29, 151, 155));
 }
 .red {
   background-image: linear-gradient(176deg, rgb(168, 50, 50), rgb(179, 90, 171));

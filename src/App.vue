@@ -15,6 +15,7 @@
       :feeds="rssFeeds"
       :categories="availableCategories"
       :categoryFilters="categoryFilters"
+      :lastAddedFeed="lastAddedFeed"
     />
     <content-modal 
       v-if="modalOpen"
@@ -59,7 +60,8 @@ export default {
       menuOpen: false,
       errorOpen: false,
       availableCategories: [],
-      categoryFilters: []
+      categoryFilters: [],
+      lastAddedFeed: ''
     }
   },
   methods: {
@@ -81,6 +83,9 @@ export default {
           if (request.responseXML) {
             if (!self.rssFeeds.includes(feed)) {
               self.rssFeeds.push(feed);
+              setTimeout(() => {
+                self.lastAddedFeed = feed;
+              }, 2000);
               localStorage.setItem('storedFeeds', self.rssFeeds);
             }
             self.populateObjectsArray(request.responseXML.documentElement, feed);
@@ -99,11 +104,17 @@ export default {
       this.loadingUrl = url;
       Mercury.parse(
         this.proxy + 
-        url).then(result => {
-        let content = result.content;
-        this.openContentModal(content);
-        this.loadingUrl = null;
-      });
+        url)
+          .then(result => {
+            if (result.error) {
+              this.displayError();
+              this.loadingUrl = null;
+            } else {
+              let content = result.content;
+              this.openContentModal(content);
+              this.loadingUrl = null;
+            }
+          });
     },
     populateObjectsArray(xmlContent, feed) {
       const itemList = xmlContent.getElementsByTagName('item');
@@ -121,10 +132,10 @@ export default {
         article.feedColorCode = this.rssFeeds.indexOf(feed)%5;
         article.imageUrl = this.findImageUrl(item.innerHTML) ? this.findImageUrl(item.innerHTML) : '';
         article.id = uuidv4();
+        
         if (!this.articles.find(a => a.sourceUrl === article.sourceUrl)) {
           this.articles.push(article);
         }
-
         if (article.category && !this.availableCategories.includes(article.category)) {
           this.availableCategories.push(article.category);
         }

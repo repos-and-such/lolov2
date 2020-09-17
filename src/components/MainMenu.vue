@@ -13,7 +13,7 @@
       <b>My feeds:</b>
       <ul v-for="feed in feeds" :key="feed">
         <span class="input-module" v-if="editedFeed === feed">
-          <input v-model="editFeedInput" @keydown.enter="confirmEdit(feed)"/>
+          <input v-model="editedFeedInput" @keydown.enter="confirmEdit(feed)"/>
           <button type="button" class="add">
             <i class="material-icons" @click="confirmEdit(feed)">check</i>
           </button>
@@ -46,23 +46,25 @@ export default {
   props: {
     feeds: Array,
     categories: Array,
-    categoryFilters: Array
+    categoryFilters: Array,
+    lastAddedFeed: String
   },
   data() {
     return {
       addFeedInput: '',
-      editFeedInput: '',
-      editedFeed: ''
+      editedFeedInput: '',
+      editedFeed: '',
+      pendingDelete: ''
     }
   },
   methods: {
     addFeed() {
-      let input = this.addFeedInput || this.editFeedInput;
+      let input = this.addFeedInput || this.editedFeedInput;
       if (!this.validateInput(input)) return;
       input.trim();
       this.$emit('addFeed', input);
       this.addFeedInput = '';
-      this.editFeedInput = '';
+      this.editedFeedInput = '';
     },
     deleteFeed(feed) {
       this.$emit('deleteFeed', feed);
@@ -72,16 +74,24 @@ export default {
     },
     openEditField(feed) {
       this.addFeedInput = '';
-      this.editFeedInput = feed;
+      this.editedFeedInput = feed;
       this.editedFeed = feed;
     },
     confirmEdit(feed) {
-      this.deleteFeed(feed);
-      this.addFeed(this.editFeedInput);
+      this.pendingDelete = feed;
+      this.addFeed(this.editedFeedInput);
       this.editedFeed = '';
     },
     toggleCategoryFilter(category) {
       this.$emit('toggleCategoryFilter', category)
+    }
+  },
+  watch: {
+    lastAddedFeed() {
+      if (this.pendingDelete) {
+        this.deleteFeed(this.pendingDelete);
+        this.pendingDelete = '';
+      }
     }
   }
 }
@@ -92,8 +102,13 @@ ul, p {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  padding: 0px;
-  margin: 12px;
+}
+
+p {
+  background-color: white;
+  padding: 12px;
+  margin: 8px;
+  box-shadow: 3px 3px 5px gray;
 }
 
 b {
@@ -162,15 +177,13 @@ button:active {
 
 .container {
   position: sticky;
-  top: 50px;
+  top: 60px;
   display: flex;
   flex-direction: column;
   font-size: 20px;
   width: 100vw;
-  background-color: white;
   padding: 0px 10vw;
   z-index: 55;
-  box-shadow: 0px 2px 2px rgb(187, 185, 185);
 }
 
 .material-icons {
@@ -201,6 +214,10 @@ input {
   width: 66vw;
 }
 
+p {
+  margin: 3px;
+}
+
 ul {
   margin: 4px 0px;
 }
@@ -223,7 +240,5 @@ ul {
 .feed-category, .feed-category-selected {
   font-size: 16px;
 }
-
-
 }
 </style>
