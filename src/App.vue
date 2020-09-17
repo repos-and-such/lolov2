@@ -8,7 +8,7 @@
       <i class="material-icons" @click="toggleMenu()">menu</i>
     </header>
     <main-menu 
-      v-if="menuOpen || true"
+      v-if="menuOpen"
       @addFeed="addFeed"
       @deleteFeed="deleteFeed"
       @toggleCategoryFilter="toggleCategoryFilter"
@@ -27,6 +27,7 @@
         <feed-article 
           :article="article"
           :loadingUrl="loadingUrl"
+          :categories="availableCategories"
           @openContentModal="fetchArticleContent(article.sourceUrl)" 
         />
       </ul>
@@ -49,12 +50,7 @@ export default {
   },
   data() {
     return {
-      rssFeeds: [
-        // 'https://flipboard.com/@raimoseero/feed-nii8kd0sz.rss', 
-        // 'https://www.nasa.gov/rss/dyn/breaking_news.rss',
-        // 'http://feeds.bbci.co.uk/news/world/rss.xml',
-        // 'https://www.feedforall.com/sample-feed.xml'
-        ],
+      rssFeeds: [],
       articles: [],
       modalOpen: false,
       openArticleContent: '',
@@ -122,9 +118,12 @@ export default {
         article.description = item.getElementsByTagName('description').item(0) ? item.getElementsByTagName('description')[0].textContent : '';
         article.sourceUrl = item.getElementsByTagName('link').item(0) ? item.getElementsByTagName('link')[0].textContent : '';
         article.feed = feed;
+        article.feedColorCode = this.rssFeeds.indexOf(feed)%5;
         article.imageUrl = this.findImageUrl(item.innerHTML) ? this.findImageUrl(item.innerHTML) : '';
         article.id = uuidv4();
-        this.articles.push(article);
+        if (!this.articles.find(a => a.sourceUrl === article.sourceUrl)) {
+          this.articles.push(article);
+        }
 
         if (article.category && !this.availableCategories.includes(article.category)) {
           this.availableCategories.push(article.category);
