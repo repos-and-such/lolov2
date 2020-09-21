@@ -83,9 +83,7 @@ export default {
           if (request.responseXML) {
             if (!self.rssFeeds.includes(feed)) {
               self.rssFeeds.push(feed);
-              setTimeout(() => {
-                self.lastAddedFeed = feed;
-              }, 2000);
+              self.lastAddedFeed = feed;
               localStorage.setItem('storedFeeds', self.rssFeeds);
             }
             self.populateObjectsArray(request.responseXML.documentElement, feed);
